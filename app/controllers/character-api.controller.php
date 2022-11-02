@@ -32,14 +32,34 @@ Class CharacterApiController{
             }
         }
     }
-    function getAllDescendant(){
+    /* PREGUNTAR SI ESTA BIEN ESTO */
+    function getAllByOrder($params = null){
+        /* Analazio si el primer parametro de la url es uno de estos campos de la bbdd, 
+        en caso de que sea ordeno por ese campo, y si no es un campo de la bbdd por defecto le pongo id*/
+        if ($params[':col'] == 'nombre' || $params[':col'] == 'rol' || $params[':col'] == 'nucleo_varita'||$params[':col'] == 'id_casa' ){ 
+            $col = $params[':col'];
+        } else $col = 'id';
+        /* Analizo el segundo parametro de la url, si es desc de descendiente le asigno
+         la palabra SORT_DESC necesaria para ordenarlos descendentemente. Si es asc o esta vacia asigno SORT_ASC */
+        if($params[':order'] == 'descendant'){
+            $order = SORT_DESC; 
+        }else if ($params[':order'] != 'ascendant' || empty($params[':order'])){
+            $order = $params[':order'];
+            return $this->view->response("La manera de orden $order es desconocida",400);
+            }else{
+                $order = SORT_ASC;
+            }
         $aux= array();
         $characters = $this->model->getAll();
         foreach ($characters as $key => $char) {
-            $aux[$key] = $char->id;
+            $aux[$key] = strtolower($char->$col);
         }
-        array_multisort($aux,SORT_DESC,$characters);
-        return $this->view->response($characters);
+        if(empty($aux)){
+            return $this->view->response("El campo $col es desconocido",400);
+        }else {
+            array_multisort($aux,$order,$characters);
+            return $this->view->response($characters);
+        }
     }
     function delete($params = null){
         $id = $params[':ID'];
