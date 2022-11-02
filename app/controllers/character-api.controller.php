@@ -32,6 +32,15 @@ Class CharacterApiController{
             }
         }
     }
+    function getAllDescendant(){
+        $aux= array();
+        $characters = $this->model->getAll();
+        foreach ($characters as $key => $char) {
+            $aux[$key] = $char->id;
+        }
+        array_multisort($aux,SORT_DESC,$characters);
+        return $this->view->response($characters);
+    }
     function delete($params = null){
         $id = $params[':ID'];
         $charDeleted = $this->model->getByID($id);      
