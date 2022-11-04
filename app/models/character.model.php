@@ -37,6 +37,5 @@ class CharacterModel{
     function update($name,$idHouse,$role,$core,$idCharacter){
         $query=$this->db->prepare("UPDATE personajes SET id_casa=?,nombre=?,rol=?,nucleo_varita=? WHERE id = ?");
         $query->execute([$idHouse,$name,$role,$core,$idCharacter]);
-    
     }
 }

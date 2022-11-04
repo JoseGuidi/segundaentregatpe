@@ -18,49 +18,86 @@ Class CharacterApiController{
     private function getData(){
         return json_decode($this->data);
     }
-    function get($params = null){
-        if($params == null){
-            $chars = $this->model->getAll();
-            return $this->view->response($chars);
+    function get($params = null){ //preguntar si resolucion con if esta bien
+        $allChars = $this->model->getAll();
+      
+        if(isset($_GET['sortby'])){ // si existe el parametro sortby en la url hay que ordenar
+            return $this->getAllByOrder($allChars);
+        }else if (isset($_GET['rol'])){// si existe el parametro search_rol en la url hay que buscar por rol
+            return $this->getSearch($allChars,$_GET['rol']);
+        }if(isset($_GET['page']) && isset($_GET['limit'])){
+           // $this->getWithPagination($_GET['page'],$_GET['limit']);
         }else{
-            $id = $params[':ID'];
-            $char = $this->model->getByID($id);
-            if(!empty($char)){
-                return $this->view->response($char);
+            if($params == null){
+                return $this->view->response($allChars);
             }else{
-                return $this->view->response("El personaje con id $id no existe",404);
+                $id = $params[':ID'];
+                $char = $this->model->getByID($id);
+                if(!empty($char)){
+                    return $this->view->response($char);
+                }else{
+                    return $this->view->response("El personaje con id $id no existe",404);
+                }
             }
         }
     }
-    /* PREGUNTAR SI ESTA BIEN ESTO */
-    function getAllByOrder($params = null){
-        /* Analazio si el primer parametro de la url es uno de estos campos de la bbdd, 
-        en caso de que sea ordeno por ese campo, y si no es un campo de la bbdd por defecto le pongo id*/
-        if ($params[':col'] == 'nombre' || $params[':col'] == 'rol' || $params[':col'] == 'nucleo_varita'||$params[':col'] == 'id_casa' ){ 
-            $col = $params[':col'];
-        } else $col = 'id';
-        /* Analizo el segundo parametro de la url, si es desc de descendiente le asigno
-         la palabra SORT_DESC necesaria para ordenarlos descendentemente. Si es asc o esta vacia asigno SORT_ASC */
-        if($params[':order'] == 'descendant'){
-            $order = SORT_DESC; 
-        }else if ($params[':order'] != 'ascendant' || empty($params[':order'])){
-            $order = $params[':order'];
-            return $this->view->response("La manera de orden $order es desconocida",400);
+    private function getSearch($allChars,$filter){
+        $aux = array();
+        foreach($allChars as $char){
+            if (strtolower($char->rol) == strtolower($filter)){
+                array_push($aux,$char);
+            }
+        }
+        return $this->view->response($aux);
+    }
+    private function getAllByOrder($characters){
+        if(isset($_GET['order'])){
+            if($_GET['order'] == 'desc'){
+                $order = SORT_DESC;
             }else{
                 $order = SORT_ASC;
             }
-        $aux= array();
-        $characters = $this->model->getAll();
-        foreach ($characters as $key => $char) {
-            $aux[$key] = strtolower($char->$col);
         }
-        if(empty($aux)){
+        else{
+            $order = SORT_ASC;
+        }
+        $col = $_GET['sortby'];
+        if (($col== 'nombre' || $col== 'rol' || $col== 'nucleo_varita'|| $col== 'id'|| $col == 'id_casa' )){ 
+            $aux= array();
+            foreach ($characters as $key => $char) {
+                $aux[$key] = strtolower($char->$col);
+            }
+            if(!empty($aux)){
+                array_multisort($aux,$order,$characters);
+                return $this->view->response($characters);
+            }
+        }else{
             return $this->view->response("El campo $col es desconocido",400);
-        }else {
-            array_multisort($aux,$order,$characters);
-            return $this->view->response($characters);
         }
+        
     }
+    /*private function getSearch($filter){
+        $result = $this->model->getByRole($filter);
+        if(empty($result)){
+            return $this->view->response("El rol $filter es desconocido",400);
+        }else {
+            return $this->view->response($result);
+        }
+        
+    }*/
+    /*private function getWithPagination($page,$limit){
+        if(is_numeric($page) || is_numeric($limit)){ //si son numeros
+            $chars = $this->model->getAll();
+            $aux = array();
+            $start = intval($params[':page']) * intval($params[':limit']);
+            foreach ($chars as $indice => $c) {
+                if ($indice > $start && $indice < ($start + intval($params[':limit']))){
+                    array_push($aux,$c);
+                }
+        }
+        return $this->view->response($aux);
+        }else return $this->view->response("Ingrese valores validos",400);
+    }*/
     function delete($params = null){
         $id = $params[':ID'];
         $charDeleted = $this->model->getByID($id);      

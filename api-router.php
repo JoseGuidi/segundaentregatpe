@@ -10,7 +10,8 @@ $router->addRoute('characters/:ID','DELETE','CharacterApiController','delete');
 $router->addRoute('characters','POST','CharacterApiController','add');
 $router->addRoute('characters/:ID','PUT','CharacterApiController','edit');
 
-$router->addRoute('characters/orderby/:col/:order','GET','CharacterApiController','getAllByOrder');
+
+$router->addRoute('characters/pagination/:limit/:page','GET','CharacterApiController','getWithPagination');
 
 $router->route($_GET["resource"], $_SERVER['REQUEST_METHOD']);
 
