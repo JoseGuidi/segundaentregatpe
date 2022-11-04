@@ -26,7 +26,7 @@ Class CharacterApiController{
         }else if (isset($_GET['rol'])){// si existe el parametro search_rol en la url hay que buscar por rol
             return $this->getSearch($allChars,$_GET['rol']);
         }if(isset($_GET['page']) && isset($_GET['limit'])){
-           // $this->getWithPagination($_GET['page'],$_GET['limit']);
+            return $this->getWithPagination($allChars,$_GET['page'],$_GET['limit']);
         }else{
             if($params == null){
                 return $this->view->response($allChars);
@@ -39,6 +39,22 @@ Class CharacterApiController{
                     return $this->view->response("El personaje con id $id no existe",404);
                 }
             }
+        }
+    }
+    private function getWithPagination($allChars,$page,$limit){
+        /* Preguntar si tiene que aparecer un mensaje en caso de que no tenga personajes que mostrar*/
+        if(is_numeric($page) && is_numeric($limit)){
+            $start = $page*$limit ;
+            $finish = $start + $limit; 
+            $result = array();
+            foreach($allChars as $i=>$char){
+                if($i >= $start && $i < $finish){
+                    array_push($result,$char);
+                }
+            }
+            return $this->view->response($result);
+        }else{
+            return $this->view->response("Los valores de pagina y limite no son numericos",400);
         }
     }
     private function getSearch($allChars,$filter){
@@ -76,15 +92,6 @@ Class CharacterApiController{
         }
         
     }
-    /*private function getSearch($filter){
-        $result = $this->model->getByRole($filter);
-        if(empty($result)){
-            return $this->view->response("El rol $filter es desconocido",400);
-        }else {
-            return $this->view->response($result);
-        }
-        
-    }*/
     /*private function getWithPagination($page,$limit){
         if(is_numeric($page) || is_numeric($limit)){ //si son numeros
             $chars = $this->model->getAll();
