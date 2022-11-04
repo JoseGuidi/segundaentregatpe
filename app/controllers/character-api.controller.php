@@ -20,12 +20,12 @@ Class CharacterApiController{
     }
     function get($params = null){ //preguntar si resolucion con if esta bien
         $allChars = $this->model->getAll();
-      
+      /* NO DEVOLVER TANTOS RETURN averiguar primero que me pide CORREGIR */
         if(isset($_GET['sortby'])){ // si existe el parametro sortby en la url hay que ordenar
-            return $this->getAllByOrder($allChars);
+            $this->getAllByOrder($allChars);
         }else if (isset($_GET['rol'])){// si existe el parametro search_rol en la url hay que buscar por rol
             return $this->getSearch($allChars,$_GET['rol']);
-        }if(isset($_GET['page']) && isset($_GET['limit'])){
+        }else if(isset($_GET['page']) && isset($_GET['limit'])){
             return $this->getWithPagination($allChars,$_GET['page'],$_GET['limit']);
         }else{
             if($params == null){
@@ -67,24 +67,19 @@ Class CharacterApiController{
         return $this->view->response($aux);
     }
     private function getAllByOrder($characters){
-        if(isset($_GET['order'])){
-            if($_GET['order'] == 'desc'){
+        if(isset($_GET['order']) && $_GET['order'] == 'desc'){
                 $order = SORT_DESC;
-            }else{
-                $order = SORT_ASC;
-            }
-        }
-        else{
+        }else{
             $order = SORT_ASC;
         }
         $col = $_GET['sortby'];
         if (($col== 'nombre' || $col== 'rol' || $col== 'nucleo_varita'|| $col== 'id'|| $col == 'id_casa' )){ 
             $aux= array();
             foreach ($characters as $key => $char) {
-                $aux[$key] = strtolower($char->$col);
+                $aux[$key] = strtolower($char->$col);// aux guarda todos los valores del campo dado de characters
             }
             if(!empty($aux)){
-                array_multisort($aux,$order,$characters);
+                array_multisort($aux,$order,$characters);//(arreglo con valores a comparar, orden asc o desc, arreglo a ordenar)
                 return $this->view->response($characters);
             }
         }else{
@@ -92,19 +87,7 @@ Class CharacterApiController{
         }
         
     }
-    /*private function getWithPagination($page,$limit){
-        if(is_numeric($page) || is_numeric($limit)){ //si son numeros
-            $chars = $this->model->getAll();
-            $aux = array();
-            $start = intval($params[':page']) * intval($params[':limit']);
-            foreach ($chars as $indice => $c) {
-                if ($indice > $start && $indice < ($start + intval($params[':limit']))){
-                    array_push($aux,$c);
-                }
-        }
-        return $this->view->response($aux);
-        }else return $this->view->response("Ingrese valores validos",400);
-    }*/
+
     function delete($params = null){
         $id = $params[':ID'];
         $charDeleted = $this->model->getByID($id);      
