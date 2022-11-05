@@ -18,55 +18,77 @@ Class CharacterApiController{
     private function getData(){
         return json_decode($this->data);
     }
-    function get($params = null){ //preguntar si resolucion con if esta bien
-        $allChars = $this->model->getAll();
-      /* NO DEVOLVER TANTOS RETURN averiguar primero que me pide CORREGIR */
-        if(isset($_GET['sortby'])){ // si existe el parametro sortby en la url hay que ordenar
-            $this->getAllByOrder($allChars);
-        }else if (isset($_GET['rol'])){// si existe el parametro search_rol en la url hay que buscar por rol
-            return $this->getSearch($allChars,$_GET['rol']);
-        }else if(isset($_GET['page']) && isset($_GET['limit'])){
-            return $this->getWithPagination($allChars,$_GET['page'],$_GET['limit']);
-        }else{
-            if($params == null){
-                return $this->view->response($allChars);
-            }else{
-                $id = $params[':ID'];
-                $char = $this->model->getByID($id);
-                if(!empty($char)){
-                    return $this->view->response($char);
-                }else{
-                    return $this->view->response("El personaje con id $id no existe",404);
+    function get($params = null){
+        $data = null;
+        $code = 200;
+        if(count($params) == 0){
+            $data = $this->model->getAll();
+            if(isset($_GET['sortby'])){
+                
+                $data = $this->getAllByOrder($data);
+                if($data == null){
+                    $col = $_GET['sortby'];
+                    $data = "El campo $col es desconocido";
+                    $code = 400;
                 }
             }
+            if(isset($_GET['rol'])){
+                $data = $this->getSearch($_GET['rol'],$data);
+               
+                if(empty($data)){
+                    $rol = $_GET['rol'];
+                    $data = "El campo $rol no tiene coincidencias";
+                    $code = 400;
+                }
+            }
+            if(isset($_GET['page']) && isset($_GET['limit'])){
+                $data = $this->getWithPagination($data,$_GET['page'],$_GET['limit']);
+                if(empty($data)){
+                    $data = "No hay mas resultados";
+                    $code = 400;
+                }else if (is_string($data)){
+                    $code = 400;
+                }
+            }
+        }else{
+            $id = $params[':ID'];
+            $char = $this->model->getByID($id);
+            if(!empty($char)){
+                $data = $char;
+            }else{
+               $data = "El personaje con id $id no existe";
+               $code = 404;
+            }
         }
+        return $this->view->response($data,$code);
     }
-    private function getWithPagination($allChars,$page,$limit){
-        /* Preguntar si tiene que aparecer un mensaje en caso de que no tenga personajes que mostrar*/
+    private function getWithPagination($characters,$page,$limit){
         if(is_numeric($page) && is_numeric($limit)){
             $start = $page*$limit ;
             $finish = $start + $limit; 
             $result = array();
-            foreach($allChars as $i=>$char){
+            foreach($characters as $i=>$char){
                 if($i >= $start && $i < $finish){
                     array_push($result,$char);
                 }
             }
-            return $this->view->response($result);
+            return $result;
         }else{
-            return $this->view->response("Los valores de pagina y limite no son numericos",400);
+            return  "Ingrese parametros validos";
         }
     }
-    private function getSearch($allChars,$filter){
+    private function getSearch($filter,$charList){
         $aux = array();
-        foreach($allChars as $char){
-            if (strtolower($char->rol) == strtolower($filter)){
-                array_push($aux,$char);
+        if(!is_string($charList)){
+            foreach($charList as $char){
+                if (strtolower($char->rol) == strtolower($filter)){
+                    array_push($aux,$char);
+                }
             }
         }
-        return $this->view->response($aux);
+        return $aux;
     }
-    private function getAllByOrder($characters){
+    private function getAllByOrder($charList){
         if(isset($_GET['order']) && $_GET['order'] == 'desc'){
                 $order = SORT_DESC;
         }else{
@@ -75,15 +97,13 @@ Class CharacterApiController{
         $col = $_GET['sortby'];
         if (($col== 'nombre' || $col== 'rol' || $col== 'nucleo_varita'|| $col== 'id'|| $col == 'id_casa' )){ 
             $aux= array();
-            foreach ($characters as $key => $char) {
+            foreach ($charList as $key => $char) {
                 $aux[$key] = strtolower($char->$col);// aux guarda todos los valores del campo dado de characters
             }
-            if(!empty($aux)){
-                array_multisort($aux,$order,$characters);//(arreglo con valores a comparar, orden asc o desc, arreglo a ordenar)
-                return $this->view->response($characters);
-            }
+            array_multisort($aux,$order,$charList);//(arreglo con valores a comparar, orden asc o desc, arreglo a ordenar)
+            return $charList;
         }else{
-            return $this->view->response("El campo $col es desconocido",400);
+            return null;
         }
         
     }
@@ -109,7 +129,7 @@ Class CharacterApiController{
                 $newChar = $this->model->getByID($idNewChar);
                 $this->view->response($newChar,201);  
             }else{
-                $this->view->response("Casa con id $newChar->id_casa no existe", 400);
+                $this->view->response("Casa con id $newChar->id_casa no existe", 404);
             }
         }
     }
