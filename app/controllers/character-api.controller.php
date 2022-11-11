@@ -2,6 +2,10 @@
 require_once 'app/models/character.model.php';
 require_once 'app/views/character-api.view.php';
 require_once 'app/models/house.model.php';
+
+
+/* PREGUNTAR QUE DIFERENCIA HAY ENTRE 400 y 404 Y cual es el indicado en cada caso de los get*/
+/* PREGUNTAR SI ESTARIA CORRECTO CONSEGUIR TODOS LOS PERSONAJES YA QUE EN TODAS LAS SUBFUNCIONES LOS NECESITO linea 29*/
 Class CharacterApiController{
     private $model;
     private $view;
@@ -22,9 +26,8 @@ Class CharacterApiController{
         $data = null;
         $code = 200;
         if(count($params) == 0){
-            $data = $this->model->getAll();
-            if(isset($_GET['sortby'])){
-                
+            $data = $this->model->getAll(); 
+            if(isset($_GET['sortby'])){      
                 $data = $this->getAllByOrder($data);
                 if($data == null){
                     $col = $_GET['sortby'];
@@ -33,8 +36,7 @@ Class CharacterApiController{
                 }
             }
             if(isset($_GET['rol'])){
-                $data = $this->getSearch($_GET['rol'],$data);
-               
+                $data = $this->getSearch($_GET['rol'],$data); 
                 if(empty($data)){
                     $rol = $_GET['rol'];
                     $data = "El campo $rol no tiene coincidencias";
