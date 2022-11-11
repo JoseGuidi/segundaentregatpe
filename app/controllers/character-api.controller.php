@@ -3,9 +3,6 @@ require_once 'app/models/character.model.php';
 require_once 'app/views/character-api.view.php';
 require_once 'app/models/house.model.php';
 
-
-/* PREGUNTAR QUE DIFERENCIA HAY ENTRE 400 y 404 Y cual es el indicado en cada caso de los get*/
-/* PREGUNTAR SI ESTARIA CORRECTO CONSEGUIR TODOS LOS PERSONAJES YA QUE EN TODAS LAS SUBFUNCIONES LOS NECESITO linea 29*/
 Class CharacterApiController{
     private $model;
     private $view;
@@ -40,14 +37,14 @@ Class CharacterApiController{
                 if(empty($data)){
                     $rol = $_GET['rol'];
                     $data = "El campo $rol no tiene coincidencias";
-                    $code = 400;
+                    $code = 404;
                 }
             }
             if(isset($_GET['page']) && isset($_GET['limit'])){
                 $data = $this->getWithPagination($data,$_GET['page'],$_GET['limit']);
                 if(empty($data)){
                     $data = "No hay mas resultados";
-                    $code = 400;
+                    $code = 404;
                 }else if (is_string($data)){
                     $code = 400;
                 }
@@ -145,7 +142,7 @@ Class CharacterApiController{
         $id = $params[':ID'];
         $charToEdit = $this->model->getByID($id); 
         if($charToEdit == null){
-            $this->view->response("El personaje con id $id no existe",400);
+            $this->view->response("El personaje con id $id no existe",404);
         }else{
             $newValues = $this->getData();
             if($this->charIsEmpty($newValues)){
@@ -155,7 +152,7 @@ Class CharacterApiController{
                     $this->model->update($newValues->nombre,$newValues->id_casa,$newValues->rol,$newValues->nucleo_varita,$id);
                     $this->view->response("Se actualizo el personaje con id $id",200);
                 }else{
-                    $this->view->response("Casa con id $newValues->id_casa no existe", 400);
+                    $this->view->response("Casa con id $newValues->id_casa no existe", 404);
                 }
             }
         }
